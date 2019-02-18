@@ -7,10 +7,11 @@ TIME_UNIT_TO_SECONDS = {
     's': 1,
     'm': 60,
     'h': 60*60,
-    'd': 60*60*24
+    'd': 60*60*24,
+    'w': 60*60*24*7
 }
 
-TTL_PATTERN = re.compile(r'^(\d+)([smhd])$')
+TTL_PATTERN = re.compile(r'^(\d+)([smhdw])$')
 
 
 def parse_ttl(ttl: str) -> int:
