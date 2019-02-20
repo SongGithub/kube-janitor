@@ -1,3 +1,5 @@
+import json
+
 from unittest.mock import MagicMock
 
 from pykube.objects import NamespacedAPIObject
@@ -132,7 +134,7 @@ def test_clean_up_custom_resource():
 
 
 def test_clean_up_by_rule():
-    api_mock = MagicMock(spec=NamespacedAPIObject, name='APIMock')
+    api_mock = MagicMock(name='APIMock')
 
     rule = Rule.from_entry({'id': 'r1', 'resources': ['customfoos'], 'jmespath': "metadata.namespace == 'ns-1'", 'ttl': '10m'})
 
@@ -165,6 +167,14 @@ def test_clean_up_by_rule():
     assert counter['rule-r1-matches'] == 1
     assert counter['customfoos-with-ttl'] == 1
     assert counter['customfoos-deleted'] == 1
+
+    api_mock.post.assert_called_once()
+    _, kwargs = api_mock.post.call_args
+    assert kwargs['url'] == 'events'
+    data = json.loads(kwargs['data'])
+    assert data['reason'] == 'TimeToLiveExpired'
+    involvedObject = {'kind': 'CustomFoo', 'name': 'foo-1', 'namespace': 'ns-1', 'apiVersion': 'srcco.de/v1', 'resourceVersion': None, 'uid': None}
+    assert data['involvedObject'] == involvedObject
 
     # verify that the delete call happened
     api_mock.delete.assert_called_once_with(namespace='ns-1', url='customfoos/foo-1', version='srcco.de/v1')
