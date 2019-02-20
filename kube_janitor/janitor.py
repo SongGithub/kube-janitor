@@ -87,13 +87,13 @@ def handle_resource(resource, rules, dry_run: bool):
 
     ttl = resource.annotations.get(TTL_ANNOTATION)
     if ttl:
-        reason = 'annotation'
+        reason = f'annotation {TTL_ANNOTATION} is set'
     else:
         for rule in rules:
             if rule.matches(resource):
                 logger.debug(f'Rule {rule.id} applies {rule.ttl} TTL to {resource.kind} {resource.namespace}/{resource.name}')
                 ttl = rule.ttl
-                reason = f'rule {rule.id}'
+                reason = f'rule {rule.id} matches'
                 counter[f'rule-{rule.id}-matches'] = 1
                 # first rule which matches
                 break
@@ -108,7 +108,7 @@ def handle_resource(resource, rules, dry_run: bool):
             age_formatted = format_duration(int(age.total_seconds()))
             logger.debug(f'{resource.kind} {resource.name} with {ttl} TTL is {age_formatted} old')
             if age.total_seconds() > ttl_seconds:
-                message = f'{resource.kind} {resource.name} with {ttl} TTL is {age_formatted} old and will be deleted (reason: {reason})'
+                message = f'{resource.kind} {resource.name} with {ttl} TTL is {age_formatted} old and will be deleted ({reason})'
                 logger.info(message)
                 create_event(resource, message, dry_run=dry_run)
                 delete(resource, dry_run=dry_run)

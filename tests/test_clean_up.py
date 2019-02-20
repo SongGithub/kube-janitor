@@ -98,7 +98,7 @@ def test_ignore_invalid_ttl():
 
 
 def test_clean_up_custom_resource():
-    api_mock = MagicMock(spec=NamespacedAPIObject, name='APIMock')
+    api_mock = MagicMock(name='APIMock')
 
     def get(**kwargs):
         if kwargs.get('url') == 'namespaces':
@@ -128,6 +128,15 @@ def test_clean_up_custom_resource():
     assert counter['resources-processed'] == 2
     assert counter['customfoos-with-ttl'] == 1
     assert counter['customfoos-deleted'] == 1
+
+    api_mock.post.assert_called_once()
+    _, kwargs = api_mock.post.call_args
+    assert kwargs['url'] == 'events'
+    data = json.loads(kwargs['data'])
+    assert data['reason'] == 'TimeToLiveExpired'
+    assert 'annotation janitor/ttl is set' in data['message']
+    involvedObject = {'kind': 'CustomFoo', 'name': 'foo-1', 'namespace': 'ns-1', 'apiVersion': 'srcco.de/v1', 'resourceVersion': None, 'uid': None}
+    assert data['involvedObject'] == involvedObject
 
     # verify that the delete call happened
     api_mock.delete.assert_called_once_with(namespace='ns-1', url='customfoos/foo-1', version='srcco.de/v1')
@@ -173,6 +182,7 @@ def test_clean_up_by_rule():
     assert kwargs['url'] == 'events'
     data = json.loads(kwargs['data'])
     assert data['reason'] == 'TimeToLiveExpired'
+    assert 'rule r1 matches' in data['message']
     involvedObject = {'kind': 'CustomFoo', 'name': 'foo-1', 'namespace': 'ns-1', 'apiVersion': 'srcco.de/v1', 'resourceVersion': None, 'uid': None}
     assert data['involvedObject'] == involvedObject
 
