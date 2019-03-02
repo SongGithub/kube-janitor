@@ -9,7 +9,7 @@ default: docker
 
 
 build:
-	docker build . -f Dockerfile -t $(BUILD_IMAGE)
+	docker build . -f DockerfileBuild -t $(BUILD_IMAGE)
 
 test: build
 	docker run -w /app -v $(PWD):/app --rm $(BUILD_IMAGE) sh -c " \
@@ -18,7 +18,7 @@ test: build
 		pipenv run coverage report"
 
 docker: build
-	docker build -f DockerfileII --build-arg "BUILD_IMAGE=$(BUILD_IMAGE)" --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
+	docker build -f DockerfileProd --build-arg "BUILD_IMAGE=$(BUILD_IMAGE)" --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
 	@echo 'Docker image $(IMAGE):$(TAG) can now be used.'
 
 push: docker
